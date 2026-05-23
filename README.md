@@ -1,71 +1,55 @@
-# HeartTalk AI
+# HeartTalk AI - OpenAI Connected Version
 
-AI 虛擬女朋友陪伴與溝通練習網站。
+AI 虛擬女朋友聊天網站，支援 Vercel 部署及真正 OpenAI API 回覆。
 
-副標題：陪你聊天，也陪你慢慢學會與人靠近。
+## 重要說明
 
-## 功能
+如果沒有設定 `OPENAI_API_KEY`，網站會自動使用本地模擬回覆，所以你會覺得「未連到 AI」。
 
-- React 18 + Vite + Tailwind CSS
-- WhatsApp / LINE / iMessage 風格聊天介面
-- 虛擬女朋友陪伴模式
-- 普通聊天、曖昧陪伴、虛擬女朋友、深夜陪伴、溝通練習模式
-- AI 主動訊息模擬
-- 情緒狀態與 Avatar 變化
-- 關係進度系統
-- 本地記憶功能 localStorage
-- PWA manifest + service worker
-- Vercel OpenAI API route `/api/chat`
-- 無 OpenAI API Key 時會自動使用本地陪伴回覆，不會白屏
+真正 AI 只會在 Vercel / Node server 環境中透過 `/api/chat` 運作。
 
-## 本機安裝
+GitHub Pages 是純靜態網站，不能安全存放 OpenAI API Key，也不能執行 `/api/chat` server route。
+如要真正連 AI，請用 Vercel 部署。
+
+## 本次修復
+
+- 修復 Vite 5 與 @vitejs/plugin-react 版本衝突
+- 加入 Vercel `/api/chat` OpenAI route
+- API Key 不會暴露在前端
+- 更新 AI prompt：真正女朋友感、樂觀、愛分享、會關心人
+- 弱化「溝通練習」身份
+- 沒有 API Key 時會 fallback 到本地回覆
+
+## Vercel 設定方法
+
+1. 將整個專案上傳 GitHub
+2. Vercel Import Project
+3. 到 Vercel：
+   Project Settings > Environment Variables
+4. 新增：
+
+```env
+OPENAI_API_KEY=你的 OpenAI API Key
+OPENAI_MODEL=gpt-4o-mini
+```
+
+5. Redeploy
+
+## 本地測試
 
 ```bash
 npm install
 npm run dev
 ```
 
-## Build
+注意：本地 Vite dev server 不一定會執行 Vercel `/api/chat`。
+最準確測試方法是部署到 Vercel 後測試。
 
-```bash
-npm run build
-```
+## 如果仍然像本地回覆
 
-## 部署到 Vercel
+請檢查：
 
-1. 將整個資料夾上傳到 GitHub。
-2. 到 Vercel 匯入 Repository。
-3. Build Command 使用：
-
-```bash
-npm run build
-```
-
-4. Output Directory 使用：
-
-```bash
-dist
-```
-
-5. 如要使用真正 OpenAI API，在 Vercel Project Settings → Environment Variables 加入：
-
-```bash
-OPENAI_API_KEY=你的 OpenAI API Key
-OPENAI_MODEL=gpt-4o-mini
-```
-
-> 注意：API Key 只放在 Vercel 環境變數，不要放在前端程式碼。
-
-## 部署到 GitHub Pages
-
-GitHub Pages 可部署前端靜態版，但不能執行 `/api/chat` serverless route。網站會自動使用本地 AI 陪伴回覆。
-
-```bash
-npm run build
-```
-
-然後將 `dist` 發佈到 GitHub Pages。
-
-## 重要安全定位
-
-本網站定位是「陪伴與溝通練習」，不是取代真人關係，也不是專業心理治療。如用戶出現自傷或危機內容，系統會提示尋求真人與緊急支援。
+- Vercel 是否已加入 `OPENAI_API_KEY`
+- 是否 Redeploy
+- Vercel Function Logs 有沒有 `OPENAI_API_KEY not configured`
+- GitHub Pages 版本不能真正連 AI

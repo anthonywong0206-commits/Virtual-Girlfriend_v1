@@ -10,8 +10,8 @@ const defaultState = {
   profile: { name: '', aiName: '小晴', interest: '' },
   mode: 'girlfriend',
   messages: [
-    { id: crypto.randomUUID(), role: 'ai', text: '嗨，我係小晴 ☁️ 今日由我陪你聊天。你可以慢慢講，唔需要急。', time: now(), mood: 'warm' },
-    { id: crypto.randomUUID(), role: 'ai', text: '我也會幫你練習點樣自然開話題、關心人，同埋表達自己。', time: now(), mood: 'happy' }
+    { id: crypto.randomUUID(), role: 'ai', text: '你終於出現啦 ☁️ 我剛剛還在想你今天會不會很忙。', time: now(), mood: 'warm' },
+    { id: crypto.randomUUID(), role: 'ai', text: '今天過得怎樣？有沒有好好吃飯呀？', time: now(), mood: 'happy' }
   ],
   memories: [],
   relationship: 12,
@@ -91,7 +91,9 @@ function App(){
         setTimeout(() => { setIsTyping(false); pushAi(data.reply, data.mood || moodToAi(mood)) }, 600 + Math.random()*900)
         return
       }
-    } catch {}
+    } catch (err) {
+      console.warn('OpenAI API not connected, using local fallback:', err)
+    }
 
     const reply = crisisReply(text) || buildLocalReply({ text, mode: state.mode, profile: state.profile, memories: state.memories, level })
     setTimeout(() => { setIsTyping(false); pushAi(reply, moodToAi(mood)) }, 700 + Math.random()*900)

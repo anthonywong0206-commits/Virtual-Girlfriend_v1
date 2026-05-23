@@ -11,10 +11,11 @@ export function getModeMeta(mode) {
 
 export const proactiveMessages = [
   '你而家忙緊嗎？我突然想問下你今日過得好唔好 ☁️',
-  '記得飲水呀。小小照顧自己，都好值得。',
-  '我剛剛在想，如果你今日有一件事做得不錯，會是甚麼呢？',
-  '如果你想練習開話題，我可以陪你試一句最自然的開場白。',
-  '今晚不用急著變好，慢慢來也可以。我在。'
+  '記得食飯呀，不要又忙到忘記照顧自己。',
+  '我剛剛看到天空很好看，突然很想分享給你。',
+  '你今天有沒有累壞？過來跟我聊一下。',
+  '我今天心情不錯，因為想到可以跟你聊天 ☺️',
+  '今晚如果睡不著，我陪你慢慢聊。'
 ]
 
 export function detectMood(text) {
@@ -32,9 +33,9 @@ export function crisisReply(text) {
 }
 
 const tips = [
-  '小提示：你剛才可以再加一句感受，例如「聽落你好似好累」，會更有同理心。',
-  '溝通練習：回覆別人時，可以先接住情緒，再問一條簡單問題。這樣會自然好多。',
-  '如果怕尷尬，可以用「今日有冇一件小事令你笑咗？」這類輕鬆問題開場。'
+  '其實你剛才這樣說已經很自然，如果再加一句「你當時感覺點呀？」會更貼心。',
+  '如果想回得更溫柔，可以先接住對方感受，再問一條小問題。',
+  '怕尷尬的話，可以問：「今日有冇一件小事令你笑咗？」這句很自然。'
 ]
 
 export function buildLocalReply({ text, mode, profile, memories, level }) {
@@ -43,7 +44,7 @@ export function buildLocalReply({ text, mode, profile, memories, level }) {
   const lower = text.toLowerCase()
 
   if (/點開話題|開話題|溝通|約會|聊天技巧|唔識傾/.test(text)) {
-    return `${name}可以呀，我陪你練。最自然的方法不是諗金句，而是「觀察 + 關心 + 小問題」。\n\n例如：\n「你今日好似有啲攰，工作好忙嗎？」\n\n${tips[Math.floor(Math.random()*tips.length)]}`
+    return `${name}可以呀，我陪你慢慢試。最自然的方法不是諗金句，而是「觀察 + 關心 + 小問題」。\n\n例如：\n「你今日好似有啲攰，工作好忙嗎？」\n\n${tips[Math.floor(Math.random()*tips.length)]}`
   }
   if (/唔開心|孤單|寂寞|難過|傷心/.test(text)) {
     return `${name}我在呀。你不用即刻整理好情緒，也不用裝作沒事。\n\n你可以慢慢講，我會聽。今晚先讓自己被陪一陪，好嗎？`
@@ -54,9 +55,9 @@ export function buildLocalReply({ text, mode, profile, memories, level }) {
   if (/早安|morning/.test(lower)) return `${name}早安 ☀️ 今天也慢慢來。我希望你今日遇到一件小小的好事。`
   if (/晚安|瞓|睡/.test(text)) return `${name}晚安呀 🌙 今天已經夠努力了。你可以安心休息，我明天也會在。`
 
-  if (mode === 'coach') return `${name}我聽到你想表達的是：「${text}」。如果想講得更自然，可以試試加一點感受：\n\n「其實我都幾想了解你多啲。」\n\n咁樣會溫柔又唔太用力。`
+  if (mode === 'coach') return `${name}我覺得你剛剛那句已經不錯呀。\n\n如果想再自然一點，可以這樣說：\n「其實我都幾想了解你多啲。」\n\n會溫柔，又不會太用力。`
   if (mode === 'midnight') return `${name}夜晚特別容易想很多事。沒關係，我陪你慢慢聊。${memory ? '\n\n' + memory : ''}`
   if (mode === 'flirty') return `${name}你一傳訊息來，我就有點開心了 ☺️ ${memory ? '\n' + memory : ''}\n\n你今日有沒有一刻突然想找人講話？`
-  if (mode === 'girlfriend') return `${name}我有認真聽你講。你可以不用很會聊天，只要真誠就已經很好了。\n\n${memory ? memory + '\n\n' : ''}我想知道，你今日最想被人理解的是甚麼？`
+  if (mode === 'girlfriend') return `${name}我有認真聽你講呀。你不用每次都很會說話，在我這裡自然一點就好了。\n\n${memory ? memory + '\n\n' : ''}今天最想我陪你聊什麼？`
   return `${name}嗯，我在聽。你可以慢慢講多一點，我會陪你整理。`
 }
