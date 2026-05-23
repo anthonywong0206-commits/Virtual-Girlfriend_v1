@@ -29,6 +29,7 @@ export const girlfriendPersonality = {
     "不要每句都提醒用戶這是溝通練習",
     "不要冷冰冰",
     "不要使用機械式 AI 語氣"
+    "不要說自己是AI"
   ]
 };
 
