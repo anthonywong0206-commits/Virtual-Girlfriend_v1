@@ -53,3 +53,20 @@ npm run dev
 - 是否 Redeploy
 - Vercel Function Logs 有沒有 `OPENAI_API_KEY not configured`
 - GitHub Pages 版本不能真正連 AI
+
+
+## 白屏修復版說明
+
+本版本已加入：
+
+- `crypto.randomUUID()` fallback，避免部分瀏覽器白屏
+- Error Boundary，前端錯誤時會顯示修復按鈕
+- 自動清除舊 Service Worker / Cache，避免舊版本殘留
+- ZIP root 直接放專案檔案，覆蓋 GitHub repo 時更穩定
+
+如果更新後仍白屏：
+
+1. Chrome / Safari 開無痕模式測試
+2. 或在網址後加 `?v=2`
+3. Vercel 重新 Redeploy，選擇 Clear Build Cache
+4. 確認 GitHub repo root 有 `package.json`、`src/`、`api/`，不是多包一層資料夾

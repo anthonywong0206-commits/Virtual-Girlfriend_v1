@@ -1,17 +1,23 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { Component, useEffect, useMemo, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Heart, Moon, Send, Sparkles, SmilePlus, Volume2, RefreshCcw, ShieldCheck, MessageCircleHeart } from 'lucide-react'
 import './styles.css'
 import { buildLocalReply, detectMood, getModeMeta, proactiveMessages, crisisReply } from './lib/companion.js'
 
-const storageKey = 'hearttalk-ai-state-v1'
+const storageKey = 'hearttalk-ai-state-v2'
+function uid(){
+  try {
+    if (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') return globalThis.uid()
+  } catch {}
+  return `id-${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
 const defaultState = {
   profile: { name: '', aiName: '小晴', interest: '' },
   mode: 'girlfriend',
   messages: [
-    { id: crypto.randomUUID(), role: 'ai', text: '你終於出現啦 ☁️ 我剛剛還在想你今天會不會很忙。', time: now(), mood: 'warm' },
-    { id: crypto.randomUUID(), role: 'ai', text: '今天過得怎樣？有沒有好好吃飯呀？', time: now(), mood: 'happy' }
+    { id: uid(), role: 'ai', text: '你終於出現啦 ☁️ 我剛剛還在想你今天會不會很忙。', time: now(), mood: 'warm' },
+    { id: uid(), role: 'ai', text: '今天過得怎樣？有沒有好好吃飯呀？', time: now(), mood: 'happy' }
   ],
   memories: [],
   relationship: 12,
@@ -19,7 +25,42 @@ const defaultState = {
 }
 
 function now(){ return new Date().toLocaleTimeString('zh-HK', { hour: '2-digit', minute: '2-digit' }) }
-function loadState(){ try { return JSON.parse(localStorage.getItem(storageKey)) || defaultState } catch { return defaultState } }
+function loadState(){
+  try {
+    const saved = JSON.parse(localStorage.getItem(storageKey))
+    if (!saved || !Array.isArray(saved.messages)) return defaultState
+    return { ...defaultState, ...saved, profile: { ...defaultState.profile, ...(saved.profile || {}) } }
+  } catch {
+    return defaultState
+  }
+}
+
+
+class ErrorBoundary extends Component {
+  constructor(props){
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+  static getDerivedStateFromError(error){
+    return { hasError: true, error }
+  }
+  componentDidCatch(error, info){
+    console.error('HeartTalk AI render error:', error, info)
+  }
+  render(){
+    if (this.state.hasError) {
+      return <div className="min-h-screen bg-[#120d22] p-6 text-white">
+        <div className="mx-auto mt-16 max-w-lg rounded-3xl border border-white/15 bg-white/10 p-6 shadow-soft backdrop-blur-xl">
+          <h1 className="text-2xl font-bold">HeartTalk AI 載入時遇到問題</h1>
+          <p className="mt-3 text-white/75">請先按下面按鈕清除舊快取，然後重新整理頁面。</p>
+          <button className="mt-5 rounded-2xl bg-pink-500 px-5 py-3 font-bold" onClick={() => { localStorage.clear(); if ('caches' in window) caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).finally(() => location.reload()); else location.reload(); }}>清除快取並重新載入</button>
+          <p className="mt-4 text-xs text-white/45">{String(this.state.error?.message || '')}</p>
+        </div>
+      </div>
+    }
+    return this.props.children
+  }
+}
 
 function App(){
   const [state, setState] = useState(loadState)
@@ -36,7 +77,13 @@ function App(){
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [state.messages, isTyping])
 
   useEffect(() => {
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {})
+    // 防止舊 PWA 快取載入舊版 JS 導致白屏。
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations?.().then(regs => regs.forEach(reg => reg.unregister())).catch(() => {})
+    }
+    if ('caches' in window) {
+      caches.keys().then(keys => keys.forEach(k => caches.delete(k))).catch(() => {})
+    }
   }, [])
 
   useEffect(() => {
@@ -65,7 +112,7 @@ function App(){
       ...s,
       aiMood: mood,
       relationship: Math.min(100, s.relationship + (increase ? 2 : 0)),
-      messages: [...s.messages, { id: crypto.randomUUID(), role: 'ai', text, time: now(), mood }]
+      messages: [...s.messages, { id: uid(), role: 'ai', text, time: now(), mood }]
     }))
   }
 
@@ -75,7 +122,7 @@ function App(){
     setInput('')
     setShowHome(false)
     const mood = detectMood(text)
-    const userMsg = { id: crypto.randomUUID(), role: 'user', text, time: now(), mood }
+    const userMsg = { id: uid(), role: 'user', text, time: now(), mood }
     setState(s => ({ ...s, messages: [...s.messages, userMsg], relationship: Math.min(100, s.relationship + 1) }))
     if (/我叫|我係|我叫做|喜歡|鍾意|生日|工作|返工|興趣|怕|緊張/.test(text)) addMemory(text)
     setIsTyping(true)
@@ -208,4 +255,4 @@ function relationshipLevel(score){
 }
 function moodToAi(mood){ return ({ sad:'worried', stress:'warm', lonely:'warm', happy:'excited' }[mood] || 'happy') }
 
-createRoot(document.getElementById('root')).render(<App />)
+createRoot(document.getElementById('root')).render(<ErrorBoundary><App /></ErrorBoundary>)
