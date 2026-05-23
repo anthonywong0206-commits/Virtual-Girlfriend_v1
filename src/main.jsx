@@ -6,12 +6,18 @@ import './styles.css'
 import { buildLocalReply, detectMood, getModeMeta, proactiveMessages, crisisReply } from './lib/companion.js'
 
 const storageKey = 'hearttalk-ai-state-v2'
+
 function uid(){
   try {
-    if (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') return globalThis.uid()
+    if (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') {
+      return globalThis.crypto.randomUUID()
+    }
   } catch {}
   return `id-${Date.now()}-${Math.random().toString(16).slice(2)}`
 }
+
+function now(){ return new Date().toLocaleTimeString('zh-HK', { hour: '2-digit', minute: '2-digit' }) }
+
 const defaultState = {
   profile: { name: '', aiName: '小晴', interest: '' },
   mode: 'girlfriend',
@@ -24,7 +30,6 @@ const defaultState = {
   aiMood: 'happy'
 }
 
-function now(){ return new Date().toLocaleTimeString('zh-HK', { hour: '2-digit', minute: '2-digit' }) }
 function loadState(){
   try {
     const saved = JSON.parse(localStorage.getItem(storageKey))
@@ -34,7 +39,6 @@ function loadState(){
     return defaultState
   }
 }
-
 
 class ErrorBoundary extends Component {
   constructor(props){
@@ -77,7 +81,6 @@ function App(){
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [state.messages, isTyping])
 
   useEffect(() => {
-    // 防止舊 PWA 快取載入舊版 JS 導致白屏。
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations?.().then(regs => regs.forEach(reg => reg.unregister())).catch(() => {})
     }
@@ -228,14 +231,35 @@ function Avatar({ mood }){
 
 function MessageBubble({ msg }){
   const isUser = msg.role === 'user'
-  return <motion.div initial={{opacity:0,y:8,scale:.98}} animate={{opacity:1,y:0,scale:1}} className={`flex ${isUser?'justify-end':'justify-start'}`}>
-    <div className={`max-w-[82%] rounded-[24px] px-4 py-3 shadow-sm md:max-w-[68%] ${isUser?'rounded-br-md bg-[#dcf8c6] text-slate-900':'rounded-bl-md bg-white/92 text-slate-900'}`}>
-      <p className="whitespace-pre-wrap leading-relaxed">{msg.text}</p><div className={`mt-1 flex items-center gap-1 text-[11px] ${isUser?'justify-end text-slate-500':'text-slate-400'}`}>{msg.time}{isUser && <span className="text-sky-500">✓✓</span>}</div>
-    </div>
-  </motion.div>
+
+  const userBubble = 'rounded-br-md bg-gradient-to-br from-[#25D366] to-[#128C7E] text-white border border-white/10'
+  const aiBubble = 'rounded-bl-md bg-gradient-to-br from-[#1f8f5f] via-[#168052] to-[#0f6f46] text-white border border-emerald-200/20'
+
+  return (
+    <motion.div
+      initial={{opacity:0,y:8,scale:.98}}
+      animate={{opacity:1,y:0,scale:1}}
+      className={`flex ${isUser?'justify-end':'justify-start'}`}
+    >
+      <div className={`max-w-[82%] rounded-[24px] px-4 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.22)] md:max-w-[68%] ${isUser ? userBubble : aiBubble}`}>
+        <p className="whitespace-pre-wrap leading-relaxed text-white">{msg.text}</p>
+        <div className={`mt-1 flex items-center gap-1 text-[11px] ${isUser?'justify-end text-white/70':'text-white/65'}`}>
+          {msg.time}{isUser && <span className="text-sky-200">✓✓</span>}
+        </div>
+      </div>
+    </motion.div>
+  )
 }
 
-function TypingBubble(){ return <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} className="flex justify-start"><div className="rounded-[24px] rounded-bl-md bg-white/92 px-4 py-3 text-slate-700 shadow-sm"><div className="flex gap-1"><span className="dot"/><span className="dot delay-150"/><span className="dot delay-300"/></div></div></motion.div> }
+function TypingBubble(){
+  return (
+    <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} className="flex justify-start">
+      <div className="rounded-[24px] rounded-bl-md bg-gradient-to-br from-[#1f8f5f] via-[#168052] to-[#0f6f46] px-4 py-3 text-white shadow-[0_8px_30px_rgba(0,0,0,0.22)]">
+        <div className="flex gap-1"><span className="dot bg-white/80"/><span className="dot delay-150 bg-white/80"/><span className="dot delay-300 bg-white/80"/></div>
+      </div>
+    </motion.div>
+  )
+}
 
 function Composer({ input, setInput, send }){
   return <footer className="border-t border-white/12 bg-black/18 p-3 backdrop-blur-xl"><div className="mx-auto flex max-w-3xl items-end gap-2"><button className="grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white/80"><SmilePlus size={20}/></button><textarea rows="1" value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()} }} placeholder="同小晴講句嘢…" className="max-h-32 min-h-11 flex-1 resize-none rounded-3xl border border-white/10 bg-white/92 px-4 py-3 text-slate-900 outline-none focus:ring-2 focus:ring-pink-300"/><button onClick={send} className="grid h-11 w-11 place-items-center rounded-full bg-gradient-to-r from-pink-400 to-violet-500 text-white shadow-glow"><Send size={18}/></button></div></footer>
